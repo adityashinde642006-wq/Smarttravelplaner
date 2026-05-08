@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Smart Travel Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap"/>
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --bg:         #f4f6f3;
+  --surface:    #ffffff;
+  --surface2:   #eef1ec;
+  --surface3:   #e5ebe2;
+  --text:       #18221e;
+  --muted:      #5e6e68;
+  --line:       #dce4d9;
+  --primary:    #076b5c;
+  --primary-lt: #d1ede8;
+  --accent:     #f0a030;
+  --accent-lt:  #fdf2de;
+  --danger:     #c0392b;
+  --danger-lt:  #fdecea;
+  --success:    #1e8a4a;
+  --success-lt: #d8f0e3;
+  --warn:       #b06000;
+  --warn-lt:    #fef3dd;
+  --r:          10px;
+  --r-lg:       16px;
+  --shadow:     0 2px 12px rgba(20,40,30,.08), 0 1px 3px rgba(20,40,30,.06);
+  --shadow-lg:  0 8px 40px rgba(20,40,30,.13);
+}
+[data-theme="dark"] {
+  --bg:         #0e1612;
+  --surface:    #182320;
+  --surface2:   #1f2e29;
+  --surface3:   #263832;
+  --text:       #e8f0ed;
+  --muted:      #8aada4;
+  --line:       #2a3c37;
+  --primary:    #2db89a;
+  --primary-lt: #0f2a24;
+  --accent:     #f5b84a;
+  --accent-lt:  #2a2010;
+  --danger:     #e05a4e;
+  --danger-lt:  #2d1210;
+  --success:    #3cc96e;
+  --success-lt: #0c2618;
+  --warn:       #f0a030;
+  --warn-lt:    #2a1a00;
+  --shadow:     0 2px 12px rgba(0,0,0,.25);
+  --shadow-lg:  0 8px 40px rgba(0,0,0,.38);
+}
+
+/* ===== RESET & BASE ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'DM Sans',ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button,input,select,textarea{font:inherit}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+ul,ol{padding-left:1.25em}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp   {from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn   {from{opacity:0}to{opacity:1}}
+@keyframes slideInR {from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInL {from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn  {from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+@keyframes spin     {to{transform:rotate(360deg)}}
+@keyframes pulse    {0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes barGrow  {from{width:0}to{width:var(--w)}}
+@keyframes heroImg  {from{transform:scale(1.06)}to{transform:scale(1)}}
+@keyframes float    {0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes shimmer  {0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.anim-fadeup  {animation:fadeUp  .55s cubic-bezier(.22,.61,.36,1) both}
+.anim-fadein  {animation:fadeIn  .4s ease both}
+.anim-scalein {animation:scaleIn .4s cubic-bezier(.22,.61,.36,1) both}
+.anim-slidelr {animation:slideInL .4s cubic-bezier(.22,.61,.36,1) both}
+.anim-sliderr {animation:slideInR .4s cubic-bezier(.22,.61,.36,1) both}
+
+/* stagger helpers */
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}
+.d4{animation-delay:.24s}.d5{animation-delay:.30s}.d6{animation-delay:.36s}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;gap:20px;
+  padding:0 5%;
+  min-height:68px;
+  background:color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter:blur(20px) saturate(1.4);
+  border-bottom:1px solid var(--line);
+  transition:box-shadow .3s;
+}
+.topbar.scrolled{box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem}
+.brand-mark{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--primary),color-mix(in srgb,var(--primary) 60%,#000));
+  color:#fff;display:grid;place-items:center;font-size:.85rem;font-weight:900;
+  box-shadow:0 2px 8px color-mix(in srgb,var(--primary) 40%,transparent);
+  transition:transform .2s;
+}
+.brand:hover .brand-mark{transform:rotate(-8deg) scale(1.08)}
+.topnav{display:flex;gap:4px;margin-left:auto}
+.topnav a{
+  padding:8px 14px;border-radius:var(--r);font-size:.88rem;color:var(--muted);
+  transition:background .15s,color .15s;
+}
+.topnav a:hover{background:var(--surface2);color:var(--text)}
+.topnav a.active{color:var(--primary);background:var(--primary-lt);font-weight:600}
+.top-actions{display:flex;gap:8px;align-items:center}
+.btn-icon{
+  width:38px;height:38px;border:1.5px solid var(--line);border-radius:var(--r);
+  background:var(--surface);cursor:pointer;display:grid;place-items:center;font-size:1rem;
+  color:var(--muted);transition:all .2s;
+}
+.btn-icon:hover{background:var(--surface2);color:var(--text);border-color:var(--text)}
+.btn-ghost{
+  padding:8px 18px;border:1.5px solid var(--line);border-radius:var(--r);
+  background:var(--surface);cursor:pointer;font-size:.88rem;font-weight:600;
+  color:var(--text);transition:all .2s;
+}
+.btn-ghost:hover{background:var(--surface2);border-color:var(--primary);color:var(--primary)}
+
+/* ===== HERO ===== */
+.hero{
+  min-height:calc(100vh - 68px);
+  display:grid;align-items:center;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(160deg, rgba(7,25,18,.88) 0%, rgba(7,25,18,.55) 55%, rgba(7,25,18,.82) 100%),
+    url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80') center/cover;
+  animation:heroImg 12s ease-in-out infinite alternate;
+}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 20% 50%, rgba(7,107,92,.25), transparent);
+}
+.hero-content{
+  position:relative;z-index:1;
+  max-width:820px;padding:10vh 5% 14vh;
+  color:#fff;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:20px;
+}
+.eyebrow::before{content:'';width:24px;height:2px;background:var(--accent)}
+.hero h1{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(3.2rem,9vw,7.2rem);
+  line-height:.92;letter-spacing:-.02em;
+  margin-bottom:28px;
+}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero-copy{
+  font-size:1.12rem;line-height:1.7;
+  color:rgba(255,255,255,.8);max-width:600px;margin-bottom:40px;
+}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:56px}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 26px;border-radius:var(--r);border:0;
+  background:var(--primary);color:#fff;font-size:.95rem;font-weight:700;
+  cursor:pointer;transition:all .22s;box-shadow:0 4px 16px color-mix(in srgb,var(--primary) 45%,transparent);
+}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 80%,#000);transform:translateY(-2px);box-shadow:0 6px 22px color-mix(in srgb,var(--primary) 40%,transparent)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary-hero{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 26px;border-radius:var(--r);
+  border:1.5px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.08);color:#fff;
+  font-size:.95rem;font-weight:600;cursor:pointer;transition:all .22s;
+  backdrop-filter:blur(10px);
+}
+.btn-secondary-hero:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.55)}
+.hero-stats{display:grid;grid-template-columns:repeat(3,auto);gap:0;max-width:480px}
+.hero-stats div{border-top:1px solid rgba(255,255,255,.2);padding:16px 20px 0 0}
+.hero-stats strong{display:block;font-size:1.6rem;font-weight:800}
+.hero-stats span{font-size:.82rem;color:rgba(255,255,255,.62)}
+.scroll-hint{
+  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:rgba(255,255,255,.5);font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;
+  animation:float 2.2s ease-in-out infinite;
+}
+.scroll-hint::after{
+  content:'';width:1px;height:40px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.4),transparent);
+}
+
+/* ===== SECTIONS ===== */
+.section{padding:72px 5% 0}
+.section:last-of-type{padding-bottom:100px}
+.section-label{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--primary);margin-bottom:14px;
+}
+.section-label::before{content:'';width:20px;height:2px;background:var(--primary)}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(1.6rem,3.5vw,2.6rem);line-height:1.1}
+
+/* ===== CARD / PANEL ===== */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.card-sm{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+
+/* ===== PLANNER FORM ===== */
+.planner-wrap{display:grid;gap:18px}
+.fieldset{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:24px;box-shadow:var(--shadow);
+}
+.fieldset-legend{
+  font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:20px;display:flex;align-items:center;gap:8px;
+}
+.fieldset-legend::after{content:'';flex:1;height:1px;background:var(--line)}
+.form-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.form-row{display:grid;gap:14px;grid-template-columns:1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:6px}
+.fg label{font-size:.8rem;font-weight:600;color:var(--muted)}
+.fg input,.fg select{
+  padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--r);
+  background:var(--surface2);color:var(--text);
+  transition:border-color .2s,box-shadow .2s;font-size:.9rem;
+}
+.fg input:focus,.fg select:focus{
+  outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent);
+  background:var(--surface);
+}
+
+/* ===== CHIP TOGGLES ===== */
+.chip-section{margin-top:6px}
+.chip-label{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);
+  background:var(--surface2);color:var(--muted);font-size:.82rem;font-weight:500;
+  cursor:pointer;transition:all .18s;user-select:none;
+}
+.chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
+.chip.on{
+  border-color:var(--primary);color:var(--primary);background:var(--primary-lt);
+  font-weight:700;
+}
+.chip-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+
+/* ===== BUDGET LIVE PREVIEW ===== */
+.budget-preview{
+  background:linear-gradient(135deg,var(--primary-lt),var(--surface2));
+  border:1.5px solid color-mix(in srgb,var(--primary) 25%,transparent);
+  border-radius:var(--r-lg);padding:20px;margin-bottom:6px;
+}
+.bp-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--primary);margin-bottom:14px}
+.bp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.bp-stat{background:var(--surface);border-radius:var(--r);padding:10px 12px;border:1px solid var(--line)}
+.bp-stat .bpl{font-size:.72rem;color:var(--muted);margin-bottom:3px}
+.bp-stat .bpv{font-size:1rem;font-weight:700;color:var(--text)}
+.bp-bar-wrap{margin-bottom:10px}
+.bp-bar-meta{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:5px}
+.bp-bar-bg{height:7px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.bp-bar-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.22,.61,.36,1)}
+.bp-bar-ok    {background:var(--success)}
+.bp-bar-close {background:var(--accent)}
+.bp-bar-over  {background:var(--danger)}
+.bp-note{font-size:.8rem;color:var(--muted);text-align:center}
+
+/* ===== SUBMIT AREA ===== */
+.submit-area{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow)}
+.btn-generate{
+  width:100%;padding:15px;border:0;border-radius:var(--r);
+  background:var(--primary);color:#fff;font-size:1rem;font-weight:700;
+  cursor:pointer;transition:all .22s;
+  box-shadow:0 4px 16px color-mix(in srgb,var(--primary) 40%,transparent);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-generate:hover{background:color-mix(in srgb,var(--primary) 82%,#000);transform:translateY(-2px)}
+.btn-generate:active{transform:translateY(0)}
+.btn-generate:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-demo{
+  width:100%;margin-top:10px;padding:11px;border:1.5px solid var(--line);border-radius:var(--r);
+  background:transparent;color:var(--muted);font-size:.88rem;cursor:pointer;transition:all .2s;
+}
+.btn-demo:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
+
+/* ===== SPINNER ===== */
+.spinner{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+/* ===== LOADING STATE ===== */
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 24px}
+.loading-state .sp{width:40px;height:40px;border:3px solid var(--surface3);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+.loading-state p{color:var(--muted);font-size:.9rem;animation:pulse 1.5s ease infinite}
+
+/* ===== SKELETON ===== */
+.skeleton{
+  background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s infinite;
+  border-radius:var(--r);
+}
+
+/* ===== SORT BAR ===== */
+.sort-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.sort-bar span{font-size:.8rem;color:var(--muted);font-weight:600}
+.sort-btn{
+  padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);
+  background:transparent;color:var(--muted);font-size:.8rem;cursor:pointer;transition:all .18s;
+}
+.sort-btn:hover{border-color:var(--primary);color:var(--primary)}
+.sort-btn.on{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:600}
+
+/* ===== RESULT GRID ===== */
+.result-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
+.empty-state{
+  grid-column:1/-1;text-align:center;padding:60px 24px;
+  background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--r-lg);
+}
+.empty-state h3{font-size:1.15rem;font-weight:600;margin-bottom:10px}
+.empty-state p{color:var(--muted);font-size:.9rem;line-height:1.6}
+
+/* ===== TRIP CARD ===== */
+.trip-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  overflow:hidden;box-shadow:var(--shadow);
+  transition:transform .25s,box-shadow .25s;
+  cursor:default;
+}
+.trip-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.card-img-wrap{position:relative;overflow:hidden;height:200px}
+.card-img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.trip-card:hover .card-img{transform:scale(1.04)}
+.card-img-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.65) 0%,transparent 55%);
+}
+.card-img-meta{position:absolute;bottom:12px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-end}
+.card-dest{color:#fff;font-size:1.2rem;font-weight:700;line-height:1.2}
+.card-dest small{font-size:.8rem;font-weight:400;opacity:.85;display:block}
+.match-badge{
+  padding:5px 10px;border-radius:999px;font-size:.72rem;font-weight:700;
+  background:rgba(255,255,255,.18);backdrop-filter:blur(8px);color:#fff;
+  border:1px solid rgba(255,255,255,.25);white-space:nowrap;
+}
+.match-badge.hi{background:var(--success);border-color:transparent}
+.match-badge.med{background:var(--accent);border-color:transparent;color:#1a0e00}
+.card-body{padding:18px}
+.visa-pill{
+  display:inline-block;padding:4px 10px;border-radius:4px;font-size:.72rem;font-weight:700;margin-bottom:14px;
+}
+.visa-free{background:var(--success-lt);color:var(--success)}
+.visa-easy{background:var(--warn-lt);color:var(--warn)}
+.visa-req {background:var(--danger-lt);color:var(--danger)}
+
+.cost-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.cost-cell{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.cost-cell .cl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.cost-cell .cv{font-size:.9rem;font-weight:700}
+.fit-within{color:var(--success)}.fit-above{color:var(--danger)}.fit-near{color:var(--warn)}
+
+/* Budget bar on card */
+.card-budget-bar{margin-bottom:16px}
+.cbb-labels{display:flex;justify-content:space-between;font-size:.73rem;color:var(--muted);margin-bottom:5px}
+.cbb-bg{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.cbb-fill{height:100%;border-radius:3px;transition:width .7s .2s cubic-bezier(.22,.61,.36,1)}
+.cbb-ok  {background:var(--success)}
+.cbb-near{background:var(--accent)}
+.cbb-over{background:var(--danger)}
+
+.expand-sections{display:grid;gap:10px}
+.expand-section{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.expand-toggle{
+  width:100%;display:flex;justify-content:space-between;align-items:center;
+  padding:11px 14px;background:var(--surface2);border:0;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text);
+  transition:background .15s;
+}
+.expand-toggle:hover{background:var(--surface3)}
+.expand-toggle .arrow{transition:transform .2s;font-size:.7rem;color:var(--muted)}
+.expand-toggle.open .arrow{transform:rotate(180deg)}
+.expand-body{display:none;padding:14px;font-size:.83rem;line-height:1.6;color:var(--muted)}
+.expand-body.open{display:block;animation:fadeIn .2s ease}
+
+.hotels-list{display:grid;gap:8px}
+.hotel-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--surface2);border-radius:8px}
+.hotel-name{font-weight:600;font-size:.82rem;color:var(--text)}
+.hotel-meta{font-size:.75rem;color:var(--muted)}
+.hotel-price{font-weight:700;font-size:.88rem;color:var(--primary)}
+
+.itin-list{display:grid;gap:0}
+.itin-day{display:grid;grid-template-columns:36px 1fr;gap:12px;position:relative;padding-bottom:14px}
+.itin-day:last-child{padding-bottom:0}
+.itin-day-num{
+  width:32px;height:32px;border-radius:50%;background:var(--primary-lt);
+  display:grid;place-items:center;font-size:.72rem;font-weight:800;color:var(--primary);
+  flex-shrink:0;border:2px solid var(--primary);
+}
+.itin-day::before{
+  content:'';position:absolute;left:15px;top:38px;bottom:0;width:2px;
+  background:linear-gradient(to bottom,var(--line),transparent);
+}
+.itin-day:last-child::before{display:none}
+.itin-content{}
+.itin-title{font-weight:700;font-size:.84rem;color:var(--text);margin-bottom:4px}
+.itin-steps{font-size:.78rem;color:var(--muted);line-height:1.65}
+
+.safety-list{display:grid;gap:6px}
+.safety-item{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--warn-lt);border-radius:8px;font-size:.8rem;color:var(--text)}
+.safety-item::before{content:'⚠';font-size:.85rem}
+
+.checklist-grid{display:grid;gap:6px}
+.check-item{display:flex;gap:9px;align-items:center;font-size:.8rem;color:var(--text)}
+.check-item::before{content:'✓';width:18px;height:18px;background:var(--success-lt);color:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0}
+
+.card-actions{display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.cta-maps{
+  flex:1;padding:9px;border-radius:var(--r);border:1.5px solid var(--line);
+  background:transparent;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text);
+  transition:all .18s;
+}
+.cta-maps:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
+.cta-save{
+  flex:1;padding:9px;border-radius:var(--r);border:0;
+  background:var(--primary);color:#fff;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:all .18s;
+}
+.cta-save:hover{background:color-mix(in srgb,var(--primary) 82%,#000)}
+.cta-save.saved{background:var(--success)}
+
+/* ===== BUDGET BREAKDOWN PANEL ===== */
+.breakdown-section{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:24px;box-shadow:var(--shadow);margin-bottom:18px;
+}
+.breakdown-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.breakdown-col{}
+.breakdown-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+.breakdown-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.87rem}
+.breakdown-row:last-child{border:0;font-weight:700;font-size:.95rem;color:var(--text)}
+.breakdown-row .rk{color:var(--muted)}
+.breakdown-row .rv{font-weight:600}
+
+/* ===== FOOD WEATHER STRIP ===== */
+.info-strip{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.info-chip{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.info-chip .ic-lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.info-chip .ic-val{font-size:.8rem;color:var(--text);line-height:1.5}
+
+/* ===== ATTRACTION TAGS ===== */
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tag{padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--muted);font-size:.75rem;font-weight:500;border:1px solid var(--line)}
+
+/* ===== SPLIT LAYOUT (Chat + Saved) ===== */
+.split-wrap{display:grid;grid-template-columns:1fr 380px;gap:22px;margin-top:0}
+.assistant-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.chat-window{flex:1;min-height:240px;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--surface2);border-radius:var(--r);margin-bottom:12px}
+.msg{max-width:88%;padding:10px 14px;border-radius:var(--r);font-size:.87rem;line-height:1.55;animation:fadeUp .2s ease both}
+.msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-radius:var(--r) var(--r) 4px var(--r)}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r) var(--r) var(--r) 4px}
+.chat-form{display:flex;gap:8px}
+.chat-input{flex:1;padding:10px 14px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface2);color:var(--text);font-size:.87rem;transition:border-color .2s}
+.chat-input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+.chat-send{padding:10px 16px;border:0;border-radius:var(--r);background:var(--primary);color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s}
+.chat-send:hover{background:color-mix(in srgb,var(--primary) 82%,#000)}
+
+.saved-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow)}
+.saved-list{display:grid;gap:10px;margin-top:12px}
+.saved-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--line);transition:background .15s}
+.saved-item:hover{background:var(--surface3)}
+.saved-info strong{display:block;font-size:.87rem;font-weight:700}
+.saved-info span{font-size:.75rem;color:var(--muted)}
+.btn-del{padding:5px 10px;border:1.5px solid var(--danger-lt);border-radius:6px;background:transparent;color:var(--danger);font-size:.75rem;cursor:pointer;transition:all .15s}
+.btn-del:hover{background:var(--danger-lt)}
+.empty-saved{color:var(--muted);font-size:.87rem;text-align:center;padding:24px}
+
+/* ===== AUTH MODAL ===== */
+dialog{border:0;border-radius:var(--r-lg);padding:0;background:var(--surface);box-shadow:var(--shadow-lg);max-width:420px;width:100%}
+dialog::backdrop{background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+.modal-inner{padding:28px;display:grid;gap:16px;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border:0;border-radius:50%;background:var(--surface2);cursor:pointer;font-size:1.1rem;color:var(--muted);display:grid;place-items:center;transition:all .18s}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);
+  background:var(--text);color:var(--bg);
+  padding:12px 22px;border-radius:var(--r);font-size:.87rem;font-weight:600;
+  opacity:0;pointer-events:none;z-index:200;
+  transition:opacity .25s,transform .25s;
+  max-width:min(520px,calc(100vw - 32px));
+  box-shadow:var(--shadow-lg);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ===== THEME TOGGLE ANIMATION ===== */
+.theme-icon{transition:transform .3s}
+[data-theme="dark"] .theme-icon{transform:rotate(180deg)}
+
+/* ===== PRINT ===== */
+@media print{
+  .topbar,.hero,.planner-section,.split-wrap,.toast,dialog,.card-actions,.sort-bar{display:none!important}
+  .section{padding:16px 0}
+  .trip-card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+  body{background:#fff;color:#000}
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .split-wrap{grid-template-columns:1fr}
+  .result-grid{grid-template-columns:1fr}
+  .breakdown-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr 1fr}
+  .chip-row{grid-template-columns:1fr}
+  .bp-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .topnav{display:none}
+  .hero h1{font-size:clamp(2.4rem,12vw,4rem)}
+  .section{padding:48px 4% 0}
+  .hero-content{padding:8vh 4% 10vh}
+  .form-row{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .cost-row{grid-template-columns:1fr 1fr}
+  .bp-grid{grid-template-columns:1fr}
+  .info-strip{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:1fr 1fr 1fr}
+  .hero-actions{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar" id="topbar">
+  <a class="brand" href="#home">
+    <div class="brand-mark">ST</div>
+    Smart Travel
+  </a>
+  <nav class="topnav">
+    <a href="#planner" class="active">Planner</a>
+    <a href="#results">Recommendations</a>
+    <a href="#assistant">Assistant</a>
+    <a href="#saved">Saved Trips</a>
+  </nav>
+  <div class="top-actions">
+    <button class="btn-icon" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+      <span class="theme-icon">◐</span>
+    </button>
+    <button class="btn-ghost" id="authBtn" onclick="openAuth()">Login</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="eyebrow anim-fadeup">AI-Assisted Travel Recommendation</div>
+    <h1 class="anim-fadeup d1">Plan your <em>perfect</em> journey</h1>
+    <p class="hero-copy anim-fadeup d2">Passport-aware, budget-fit travel plans with hotels, transport, day-wise itineraries, food ideas, weather, safety tips, maps, and a ready checklist — all in seconds.</p>
+    <div class="hero-actions anim-fadeup d3">
+      <a href="#planner" class="btn-primary">Plan my trip →</a>
+      <button class="btn-secondary-hero" onclick="fillDemo();scrollTo('#planner')">Use demo inputs</button>
+    </div>
+    <div class="hero-stats anim-fadeup d4">
+      <div><strong>8</strong><span>Destinations</span></div>
+      <div><strong>15+</strong><span>Smart filters</span></div>
+      <div><strong>100%</strong><span>Budget-tracked</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">Scroll</div>
+</section>
+
+<!-- PLANNER SECTION -->
+<section class="section planner-section" id="planner">
+  <div class="section-head">
+    <div>
+      <div class="section-label anim-fadeup">Recommendation engine</div>
+      <h2 class="section-title anim-fadeup d1">Tell us how you travel</h2>
+    </div>
+  </div>
+
+  <div class="planner-wrap">
+    <!-- Core details -->
+    <div class="fieldset anim-fadeup d1">
+      <div class="fieldset-legend">Core trip details</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Passport country</label>
+          <select id="passportCountry">
+            <option>India</option><option>United States</option><option>United Kingdom</option>
+            <option>Canada</option><option>Australia</option><option>Singapore</option><option>United Arab Emirates</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Travel scope</label>
+          <select id="travelScope">
+            <option>Worldwide Trip</option><option>National Trip</option><option>Local Trip</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Budget amount</label>
+          <input type="number" id="budgetAmount" placeholder="160000" min="0" value="160000" oninput="updateBudgetPreview()"/>
+        </div>
+        <div class="fg">
+          <label>Currency</label>
+          <select id="currency" onchange="updateBudgetPreview()">
+            <option>INR</option><option>USD</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Budget category</label>
+          <select id="budgetCategory" onchange="updateBudgetPreview()">
+            <option>Medium</option><option>Low</option><option>Luxury</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Hotel quality</label>
+          <select id="hotelQuality" onchange="updateBudgetPreview()">
+            <option>3-Star</option><option>Budget</option><option>4-Star</option><option>5-Star</option><option>Luxury Resort</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Days</label>
+          <input type="number" id="days" value="5" min="1" max="30" oninput="updateBudgetPreview()"/>
+        </div>
+        <div class="fg">
+          <label>Nights</label>
+          <input type="number" id="nights" value="4" min="1" max="30" oninput="updateBudgetPreview()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travelers & Style -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div class="fieldset anim-fadeup d2">
+        <div class="fieldset-legend">Travelers</div>
+        <div class="form-row">
+          <div class="fg"><label>Adult males</label><input type="number" id="adultMales" value="1" min="0" oninput="updateBudgetPreview()"/></div>
+          <div class="fg"><label>Adult females</label><input type="number" id="adultFemales" value="1" min="0" oninput="updateBudgetPreview()"/></div>
+          <div class="fg"><label>Children</label><input type="number" id="children" value="0" min="0" oninput="updateBudgetPreview()"/></div>
+        </div>
+      </div>
+      <div class="fieldset anim-fadeup d3">
+        <div class="fieldset-legend">Travel style</div>
+        <div class="form-row">
+          <div class="fg">
+            <label>Transportation</label>
+            <select id="transportation"><option>Flight</option><option>Train</option><option>Bus</option><option>Car</option></select>
+          </div>
+          <div class="fg">
+            <label>Safety priority</label>
+            <select id="safetyPriority"><option>High</option><option>Medium</option><option>Low</option></select>
+          </div>
+          <div class="fg">
+            <label>Trip pace</label>
+            <select id="tripPace"><option>Balanced</option><option>Relaxed</option><option>Fast-Paced</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interests -->
+    <div class="fieldset anim-fadeup d2">
+      <div class="fieldset-legend">Interests</div>
+      <div class="chip-section">
+        <div class="chip-label">Travel interests</div>
+        <div class="chips" id="chips-interests">
+          <span class="chip" data-v="adventure">Adventure</span>
+          <span class="chip" data-v="beaches">Beaches</span>
+          <span class="chip" data-v="mountains">Mountains</span>
+          <span class="chip" data-v="historical">Historical</span>
+          <span class="chip" data-v="spiritual">Spiritual</span>
+          <span class="chip" data-v="wildlife">Wildlife</span>
+          <span class="chip" data-v="shopping">Shopping</span>
+          <span class="chip" data-v="honeymoon">Honeymoon</span>
+          <span class="chip" data-v="family">Family vacation</span>
+          <span class="chip" data-v="food">Food tourism</span>
+        </div>
+      </div>
+      <div class="chip-row" style="margin-top:18px">
+        <div class="chip-section">
+          <div class="chip-label">Climate preference</div>
+          <div class="chips" id="chips-climate">
+            <span class="chip" data-v="cold">Cold</span>
+            <span class="chip" data-v="moderate">Moderate</span>
+            <span class="chip" data-v="hot">Hot</span>
+            <span class="chip" data-v="snowy">Snowy</span>
+            <span class="chip" data-v="rainy">Rainy</span>
+          </div>
+        </div>
+        <div class="chip-section">
+          <div class="chip-label">Food preference</div>
+          <div class="chips" id="chips-food">
+            <span class="chip" data-v="Vegetarian">Vegetarian</span>
+            <span class="chip" data-v="Non-Vegetarian">Non-Vegetarian</span>
+            <span class="chip" data-v="Jain">Jain</span>
+            <span class="chip" data-v="Vegan">Vegan</span>
+          </div>
+        </div>
+        <div class="chip-section">
+          <div class="chip-label">Accessibility</div>
+          <div class="chips" id="chips-access">
+            <span class="chip" data-v="Senior Citizen Friendly">Senior Friendly</span>
+            <span class="chip" data-v="Wheelchair Accessible">Wheelchair</span>
+            <span class="chip" data-v="Child Friendly">Child Friendly</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget Preview + Submit -->
+    <div class="submit-area anim-fadeup d3">
+      <div class="budget-preview" id="budgetPreview">
+        <div class="bp-title">Live budget estimate</div>
+        <div class="bp-grid" id="bpStats">
+          <div class="bp-stat"><div class="bpl">Your budget</div><div class="bpv" id="bpBudget">₹1,60,000</div></div>
+          <div class="bp-stat"><div class="bpl">Avg est. cost</div><div class="bpv" id="bpEst">—</div></div>
+          <div class="bp-stat"><div class="bpl">Per person/day</div><div class="bpv" id="bpPpd">—</div></div>
+        </div>
+        <div class="bp-bar-wrap">
+          <div class="bp-bar-meta"><span>Budget used</span><span id="bpPct">—</span></div>
+          <div class="bp-bar-bg"><div class="bp-bar-fill bp-bar-ok" id="bpBar" style="width:0%"></div></div>
+        </div>
+        <div class="bp-note" id="bpNote">Enter budget and trip details to see live estimates.</div>
+      </div>
+      <button class="btn-generate" id="generateBtn" onclick="generate()">
+        <span id="genBtnText">Generate travel plan</span>
+        <span id="genBtnSpin" style="display:none"><div class="spinner"></div></span>
+      </button>
+      <button class="btn-demo" onclick="fillDemo()">Use demo inputs (India · ₹1,60,000 · 5 days)</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS SECTION -->
+<section class="section" id="results">
+  <div class="section-head anim-fadeup">
+    <div>
+      <div class="section-label">Recommended destinations</div>
+      <h2 class="section-title">Your travel plans</h2>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="window.print()" title="Print / PDF">🖨 Print report</button>
+    </div>
+  </div>
+  <div id="loadingState" class="loading-state" style="display:none">
+    <div class="sp"></div>
+    <p id="loadingMsg">Analysing your preferences…</p>
+  </div>
+  <div class="sort-bar" id="sortBar" style="display:none">
+    <span>Sort by:</span>
+    <button class="sort-btn on" onclick="sortBy('score')">Best match</button>
+    <button class="sort-btn" onclick="sortBy('cost-asc')">Cost ↑</button>
+    <button class="sort-btn" onclick="sortBy('cost-desc')">Cost ↓</button>
+    <button class="sort-btn" onclick="sortBy('budget-fit')">Budget fit first</button>
+  </div>
+  <div class="result-grid" id="resultGrid">
+    <div class="empty-state">
+      <h3>No recommendations yet</h3>
+      <p>Complete the planner form above and click <strong>Generate travel plan</strong> to see destination recommendations here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CHAT + SAVED SECTION -->
+<section class="section" id="assistant">
+  <div class="split-wrap">
+    <!-- AI Chat -->
+    <div class="assistant-card anim-fadeup">
+      <div class="section-label" style="margin-bottom:8px">AI assistant</div>
+      <h3 style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:14px">Refine the plan</h3>
+      <div class="chat-window" id="chatWindow"></div>
+      <div class="chat-form">
+        <input class="chat-input" id="chatInput" placeholder="Ask: make it cheaper, safer, more family-friendly…" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="chat-send" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+
+    <!-- Saved Trips -->
+    <div class="saved-card anim-fadeup d2" id="saved">
+      <div class="section-label" style="margin-bottom:8px">Saved trips</div>
+      <h3 style="font-family:'DM Serif Display',serif;font-size:1.3rem">Your saved plans</h3>
+      <div class="saved-list" id="savedList">
+        <div class="empty-saved">Login to save and view trips.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTH DIALOG -->
+<dialog id="authDialog">
+  <div class="modal-inner">
+    <button class="modal-close" onclick="document.getElementById('authDialog').close()">×</button>
+    <h2 style="font-family:'DM Serif Display',serif" id="authTitle">Welcome back</h2>
+    <div class="fg" id="nameField" style="display:none">
+      <label>Full name</label>
+      <input type="text" id="authName" placeholder="Your name"/>
+    </div>
+    <div class="fg">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="you@example.com"/>
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="Minimum 6 characters"/>
+    </div>
+    <button class="btn-generate" id="authSubmit" onclick="doAuth()" style="margin-top:4px">Login</button>
+    <button class="btn-demo" id="authSwitch" onclick="switchAuth()">Create an account</button>
+  </div>
+</dialog>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   DATA — 8 destinations with full attributes
+   ========================================================= */
+const DESTINATIONS = [
+  {
+    id:'goa',name:'Goa',country:'India',region:'Asia',scope:['local','national'],
+    image:'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
+    interests:['beaches','shopping','food','honeymoon','family'],
+    climate:['hot','moderate','rainy'],bestSeason:'November to February',
+    languages:['English','Hindi','Local'],
+    food:['Vegetarian','Non-Vegetarian','Vegan'],
+    accessibility:['Senior Citizen Friendly','Child Friendly'],
+    safetyLevel:'medium',
+    avgDailyCostINR:{low:2500,medium:5500,luxury:14000},
+    visaFreeFor:['India'],
+    easyAccessFor:['United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Coastal Nest Stay',quality:'Budget',nightlyINR:1800},
+      {name:'Casa Marina Resort',quality:'4-Star',nightlyINR:7500},
+      {name:'Aurelia Beach Retreat',quality:'Luxury Resort',nightlyINR:19000}
+    ],
+    attractions:['Baga Beach','Fort Aguada','Fontainhas','Dudhsagar Falls'],
+    foods:['Goan thali','Bebinca','Seafood curry','Poi bread'],
+    coordinates:{lat:15.2993,lng:74.124},
+    weather:'Warm coastal weather with pleasant evenings in peak season.'
+  },
+  {
+    id:'manali',name:'Manali',country:'India',region:'Asia',scope:['local','national'],
+    image:'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80',
+    interests:['mountains','adventure','honeymoon','family'],
+    climate:['cold','snowy','moderate'],bestSeason:'October to June',
+    languages:['English','Hindi','Local'],
+    food:['Vegetarian','Non-Vegetarian','Jain'],
+    accessibility:['Senior Citizen Friendly','Child Friendly'],
+    safetyLevel:'medium',
+    avgDailyCostINR:{low:2200,medium:5200,luxury:13000},
+    visaFreeFor:['India'],easyAccessFor:['United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Snowline Homestay',quality:'Budget',nightlyINR:1500},
+      {name:'Cedar Valley Hotel',quality:'3-Star',nightlyINR:4200},
+      {name:'Himalayan Crest Resort',quality:'5-Star',nightlyINR:15500}
+    ],
+    attractions:['Solang Valley','Hadimba Temple','Old Manali','Atal Tunnel'],
+    foods:['Siddu','Trout curry','Tibetan momos','Himachali dham'],
+    coordinates:{lat:32.2432,lng:77.1892},
+    weather:'Cool mountain weather; snow is likely around higher areas in winter.'
+  },
+  {
+    id:'jaipur',name:'Jaipur',country:'India',region:'Asia',scope:['local','national'],
+    image:'https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=800&q=80',
+    interests:['historical','shopping','food','family'],
+    climate:['hot','moderate'],bestSeason:'October to March',
+    languages:['English','Hindi','Local'],
+    food:['Vegetarian','Jain','Vegan'],
+    accessibility:['Senior Citizen Friendly','Child Friendly'],
+    safetyLevel:'high',
+    avgDailyCostINR:{low:1800,medium:4800,luxury:12000},
+    visaFreeFor:['India'],easyAccessFor:['United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Pink City Inn',quality:'Budget',nightlyINR:1400},
+      {name:'Amber Heritage Hotel',quality:'4-Star',nightlyINR:6500},
+      {name:'Royal Courtyard Palace',quality:'Luxury Resort',nightlyINR:22000}
+    ],
+    attractions:['Amber Fort','Hawa Mahal','City Palace','Johri Bazaar'],
+    foods:['Dal baati churma','Ghewar','Pyaaz kachori','Rajasthani thali'],
+    coordinates:{lat:26.9124,lng:75.7873},
+    weather:'Dry weather with sunny days; evenings are comfortable in winter.'
+  },
+  {
+    id:'kerala',name:'Kerala Backwaters',country:'India',region:'Asia',scope:['local','national'],
+    image:'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80',
+    interests:['beaches','spiritual','wildlife','family','food','honeymoon'],
+    climate:['moderate','rainy','hot'],bestSeason:'September to March',
+    languages:['English','Hindi','Local'],
+    food:['Vegetarian','Non-Vegetarian','Vegan'],
+    accessibility:['Senior Citizen Friendly','Child Friendly'],
+    safetyLevel:'high',
+    avgDailyCostINR:{low:2400,medium:6200,luxury:17000},
+    visaFreeFor:['India'],easyAccessFor:['United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Canal View Homestay',quality:'Budget',nightlyINR:1700},
+      {name:'Lagoon Garden Hotel',quality:'4-Star',nightlyINR:7800},
+      {name:'Private Houseboat Suite',quality:'Luxury Resort',nightlyINR:21000}
+    ],
+    attractions:['Alleppey Houseboats','Kumarakom','Marari Beach','Vembanad Lake'],
+    foods:['Appam stew','Sadya','Puttu kadala','Malabar biryani'],
+    coordinates:{lat:9.4981,lng:76.3388},
+    weather:'Humid tropical weather with lush scenery after monsoon.'
+  },
+  {
+    id:'bali',name:'Bali',country:'Indonesia',region:'Asia',scope:['worldwide'],
+    image:'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80',
+    interests:['beaches','spiritual','honeymoon','food','adventure'],
+    climate:['hot','rainy','moderate'],bestSeason:'April to October',
+    languages:['English','Local'],
+    food:['Vegetarian','Non-Vegetarian','Vegan'],
+    accessibility:['Senior Citizen Friendly','Child Friendly'],
+    safetyLevel:'high',
+    avgDailyCostINR:{low:5500,medium:11000,luxury:28000},
+    visaFreeFor:['India','United States','United Kingdom','Canada','Australia'],
+    easyAccessFor:['United Arab Emirates','Singapore'],
+    hotels:[
+      {name:'Ubud Green Stay',quality:'Budget',nightlyINR:3200},
+      {name:'Seminyak Ocean Hotel',quality:'4-Star',nightlyINR:9800},
+      {name:'Cliffside Pool Villa',quality:'Luxury Resort',nightlyINR:36000}
+    ],
+    attractions:['Ubud Rice Terraces','Uluwatu Temple','Nusa Penida','Seminyak'],
+    foods:['Nasi goreng','Gado-gado','Satay','Tropical smoothie bowls'],
+    coordinates:{lat:-8.3405,lng:115.092},
+    weather:'Warm tropical climate; dry season is best for beaches and outdoor trips.'
+  },
+  {
+    id:'dubai',name:'Dubai',country:'United Arab Emirates',region:'Middle East',scope:['worldwide'],
+    image:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+    interests:['shopping','family','honeymoon','food','adventure'],
+    climate:['hot','moderate'],bestSeason:'November to March',
+    languages:['English','Hindi','Local'],
+    food:['Vegetarian','Non-Vegetarian','Jain','Vegan'],
+    accessibility:['Senior Citizen Friendly','Wheelchair Accessible','Child Friendly'],
+    safetyLevel:'high',
+    avgDailyCostINR:{low:9000,medium:18000,luxury:52000},
+    visaFreeFor:['United Arab Emirates'],
+    easyAccessFor:['India','United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Deira City Stay',quality:'Budget',nightlyINR:4800},
+      {name:'Marina Skyline Hotel',quality:'4-Star',nightlyINR:14500},
+      {name:'Palm Signature Resort',quality:'Luxury Resort',nightlyINR:68000}
+    ],
+    attractions:['Burj Khalifa','Dubai Mall','Desert Safari','Museum of the Future'],
+    foods:['Shawarma','Mandi','Luqaimat','Global buffet dining'],
+    coordinates:{lat:25.2048,lng:55.2708},
+    weather:'Sunny desert climate; winter months are comfortable for sightseeing.'
+  },
+  {
+    id:'singapore',name:'Singapore',country:'Singapore',region:'Asia',scope:['worldwide'],
+    image:'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
+    interests:['family','shopping','food','wildlife','honeymoon'],
+    climate:['hot','rainy','moderate'],bestSeason:'February to April',
+    languages:['English','Local'],
+    food:['Vegetarian','Non-Vegetarian','Vegan','Jain'],
+    accessibility:['Senior Citizen Friendly','Wheelchair Accessible','Child Friendly'],
+    safetyLevel:'high',
+    avgDailyCostINR:{low:8500,medium:17500,luxury:42000},
+    visaFreeFor:['Singapore'],
+    easyAccessFor:['India','United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Bugis Smart Stay',quality:'Budget',nightlyINR:6200},
+      {name:'Orchard Central Hotel',quality:'4-Star',nightlyINR:15000},
+      {name:'Bayfront Grand',quality:'5-Star',nightlyINR:39000}
+    ],
+    attractions:['Gardens by the Bay','Sentosa','Marina Bay Sands','Singapore Zoo'],
+    foods:['Laksa','Hainanese rice','Chilli paneer','Kaya toast'],
+    coordinates:{lat:1.3521,lng:103.8198},
+    weather:'Humid, warm, and occasionally rainy throughout the year.'
+  },
+  {
+    id:'switzerland',name:'Switzerland',country:'Switzerland',region:'Europe',scope:['worldwide'],
+    image:'https://images.unsplash.com/photo-1505841639751-92d4b5a7bbd5?auto=format&fit=crop&w=800&q=80',
+    interests:['mountains','honeymoon','adventure','family','shopping'],
+    climate:['cold','snowy','moderate'],bestSeason:'April to October for scenery, Dec–Mar for snow',
+    languages:['English','Local'],
+    food:['Vegetarian','Non-Vegetarian','Vegan'],
+    accessibility:['Senior Citizen Friendly','Wheelchair Accessible','Child Friendly'],
+    safetyLevel:'high',
+    avgDailyCostINR:{low:18000,medium:35000,luxury:82000},
+    visaFreeFor:['Switzerland'],
+    easyAccessFor:['United States','United Kingdom','Canada','Australia'],
+    hotels:[
+      {name:'Alpine Budget Lodge',quality:'Budget',nightlyINR:9800},
+      {name:'Lucerne Lake Hotel',quality:'4-Star',nightlyINR:26000},
+      {name:'Zermatt Glacier Resort',quality:'Luxury Resort',nightlyINR:92000}
+    ],
+    attractions:['Interlaken','Jungfraujoch','Lucerne','Zermatt'],
+    foods:['Fondue','Rösti','Swiss chocolate','Alpine bakery meals'],
+    coordinates:{lat:46.8182,lng:8.2275},
+    weather:'Cool alpine weather; snow conditions depend on altitude and season.'
+  }
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const USD_TO_INR = 83;
+const state = {
+  recs: [],
+  prefs: null,
+  saved: JSON.parse(localStorage.getItem('stp_saved')||'[]'),
+  user: JSON.parse(localStorage.getItem('stp_user')||'null'),
+  authMode: 'login',
+  sortMode: 'score'
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const lower = v => String(v||'').toLowerCase();
+const fmt = (n,cur='INR') => new Intl.NumberFormat(cur==='INR'?'en-IN':'en-US',{style:'currency',currency:cur,maximumFractionDigits:0}).format(n||0);
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+function scrollTo(id){document.querySelector(id).scrollIntoView({behavior:'smooth',block:'start'})}
+
+function getChips(id){return [...document.querySelectorAll(`#${id} .chip.on`)].map(c=>c.dataset.v)}
+
+function budgetINR(){
+  const amt=Number(document.getElementById('budgetAmount').value)||0;
+  return document.getElementById('currency').value==='USD' ? amt*USD_TO_INR : amt;
+}
+
+/* =========================================================
+   LIVE BUDGET PREVIEW
+   ========================================================= */
+function updateBudgetPreview(){
+  const budget = budgetINR();
+  const days   = Math.max(Number(document.getElementById('days').value)||5,1);
+  const nights = Math.max(Number(document.getElementById('nights').value)||4,1);
+  const males  = Number(document.getElementById('adultMales').value)||0;
+  const females= Number(document.getElementById('adultFemales').value)||0;
+  const children=Number(document.getElementById('children').value)||0;
+  const travelers=Math.max(males+females+children,1);
+  const cat    = lower(document.getElementById('budgetCategory').value);
+  const hq     = document.getElementById('hotelQuality').value;
+
+  // Estimate using average of all valid destinations
+  const scope = lower(document.getElementById('travelScope').value).replace(' trip','');
+  const valid  = DESTINATIONS.filter(d=>{
+    if(scope==='nationwide'||scope==='national') return d.country==='India';
+    if(scope==='local') return d.scope.includes('local');
+    return true;
+  });
+  if(!valid.length){document.getElementById('bpNote').textContent='No matching destinations for this scope.';return}
+
+  const avgDaily = valid.reduce((s,d)=>s+(d.avgDailyCostINR[cat]||d.avgDailyCostINR.medium),0)/valid.length;
+  const avgHotel = valid.map(d=>{
+    const h=d.hotels.find(h=>lower(h.quality)===lower(hq));
+    return h?h.nightlyINR:(d.hotels[Math.floor(d.hotels.length/2)]||d.hotels[0]).nightlyINR;
+  }).reduce((s,v)=>s+v,0)/valid.length;
+
+  const hotelCost  = Math.round(avgHotel * nights);
+  const actCost    = Math.round(avgDaily * days * travelers);
+  const childDisc  = Math.round(children * avgDaily * days * 0.25);
+  const estTotal   = Math.max(hotelCost + actCost - childDisc, 0);
+  const pct        = budget>0 ? Math.min((estTotal/budget)*100,200) : 0;
+  const ppd        = travelers>0&&days>0 ? Math.round(estTotal/(travelers*days)) : 0;
+
+  document.getElementById('bpBudget').textContent = fmt(budget);
+  document.getElementById('bpEst').textContent    = fmt(estTotal);
+  document.getElementById('bpPpd').textContent    = fmt(ppd)+'/day';
+  document.getElementById('bpPct').textContent    = budget>0 ? Math.round(pct)+'%' : '—';
+
+  const bar = document.getElementById('bpBar');
+  const note= document.getElementById('bpNote');
+  const pctCapped = Math.min(pct,100);
+  bar.style.width  = pctCapped+'%';
+  bar.className    = 'bp-bar-fill '+(pct<=90?'bp-bar-ok':pct<=115?'bp-bar-close':'bp-bar-over');
+
+  if(!budget){ note.textContent='Enter your budget to see how your estimate compares.'; return; }
+  if(pct<=90)  note.textContent=`✓ Good! Your budget likely covers most destinations. Est. ${Math.round(pct)}% used.`;
+  else if(pct<=110) note.textContent=`⚡ Close! Your budget is right at the estimate. Try Low tier or fewer nights.`;
+  else note.textContent=`⚠ Over budget by ~${Math.round(pct-100)}%. Consider Budget hotels or shorter duration.`;
+}
+
+/* =========================================================
+   RECOMMENDATION ENGINE (client-side port)
+   ========================================================= */
+function getVisaStatus(dest,passport){
+  if(dest.visaFreeFor?.includes(passport)) return {label:'Visa-free / domestic access',cls:'visa-free'};
+  if(dest.easyAccessFor?.includes(passport)) return {label:'Easy access / e-visa available',cls:'visa-easy'};
+  return {label:'Visa required — verify embassy before booking',cls:'visa-req'};
+}
+
+function scopeMatches(dest,scope){
+  const w = lower(scope).replace(' trip','');
+  if(w==='worldwide') return true;
+  if(w==='national') return dest.country==='India';
+  if(w==='local') return dest.scope.includes('local');
+  return true;
+}
+
+function pickHotels(dest,hotelQuality,cat){
+  const exact = dest.hotels.filter(h=>lower(h.quality)===lower(hotelQuality));
+  const fallback = [...dest.hotels].sort((a,b)=>a.nightlyINR-b.nightlyINR);
+  if(exact.length) return exact.slice(0,2);
+  if(cat==='luxury') return fallback.slice(-2).reverse();
+  if(cat==='medium') return fallback.slice(1,3);
+  return fallback.slice(0,2);
+}
+
+function transportPlan(dest,prefs){
+  const pref = prefs.transportation||'Flight';
+  if(dest.country!=='India'){
+    return {primary:'Flight',details:`${pref==='Flight'?'Direct or one-stop':'Flight recommended despite preference'} routes to ${dest.country}; use local metro, taxi, or rental on arrival.`};
+  }
+  if(pref==='Train') return {primary:'Train',details:'Train to the nearest major station, then cab/local bus for final transfer.'};
+  if(pref==='Bus')   return {primary:'Bus',details:'Volvo or AC sleeper bus for budget-friendly intercity travel.'};
+  if(pref==='Car')   return {primary:'Car',details:'Private cab or self-drive route with planned meal and rest stops.'};
+  return {primary:'Flight',details:'Flight to the nearest airport followed by hotel transfer.'};
+}
+
+function buildItinerary(dest,prefs,duration){
+  const pace = lower(prefs.tripPace||'balanced');
+  const perDay = pace==='fast-paced'?3:pace==='relaxed'?1:2;
+  const att = dest.attractions||[];
+  return Array.from({length:duration.days},(_,i)=>{
+    const start = i*perDay;
+    const items = att.slice(start,start+perDay);
+    const dayAtt = items.length?items:att.slice(0,perDay);
+    const theme = i===0?'Arrival & orientation':i===duration.days-1?'Highlights & departure buffer':'Curated exploration';
+    return {
+      day:i+1,title:theme,
+      morning:i===0?`Arrive in ${dest.name}, check in and settle.`:`Visit ${dayAtt[0]||dest.name}.`,
+      afternoon:`Explore ${dayAtt[1]||'local markets, cafes, and scenic points'}.`,
+      evening:i===duration.days-1?'Checkout, souvenirs, and return transfer.':'Dinner near stay area with a light evening walk.'
+    };
+  });
+}
+
+function buildChecklist(dest,prefs){
+  const items=['Government ID and passport copies','Confirmed hotel and transport bookings','Emergency contacts saved on phone','Medicines and personal essentials'];
+  if(dest.country!=='India') items.push('Visa documents, travel insurance, forex card');
+  const clim=[...(prefs.climatePreference||[])].map(lower);
+  if(clim.includes('cold')||clim.includes('snowy')) items.push('Thermals, jacket, gloves, and sturdy boots');
+  if((prefs.accessibility||[]).length) items.push('Confirm accessibility support with hotel and transport provider');
+  if((prefs.interests||[]).includes('adventure')) items.push('First-aid kit, sunscreen, and activity gear');
+  return items;
+}
+
+function calcCost(dest,prefs){
+  const travelers = Math.max(
+    Number(prefs.travelers.adultMales)+Number(prefs.travelers.adultFemales)+Number(prefs.travelers.children),1
+  );
+  const days   = prefs.duration.days;
+  const nights = prefs.duration.nights;
+  const cat    = lower(prefs.budget.category||'medium');
+  const baseDaily = dest.avgDailyCostINR[cat]||dest.avgDailyCostINR.medium||5000;
+  const hotels = pickHotels(dest,prefs.hotelQuality,cat);
+  const hotelNightly = hotels[0]?.nightlyINR||baseDaily*0.45;
+  const hotelCost  = hotelNightly * nights;
+  const actCost    = baseDaily * days * travelers;
+  const childDisc  = Number(prefs.travelers.children||0)*baseDaily*days*0.25;
+  const estINR     = Math.max(Math.round(hotelCost+actCost-childDisc),0);
+  const budgetINRv = prefs.budget.currency==='USD' ? prefs.budget.amount*USD_TO_INR : prefs.budget.amount;
+
+  let budgetFit, fitCls;
+  if(!budgetINRv){budgetFit='Budget not specified';fitCls=''}
+  else if(estINR<=budgetINRv*0.90){budgetFit='Within budget ✓';fitCls='fit-within'}
+  else if(estINR<=budgetINRv*1.10){budgetFit='Near budget ⚡';fitCls='fit-near'}
+  else{budgetFit='Above budget ⚠';fitCls='fit-above'}
+
+  // Detailed breakdown
+  const breakdown = {
+    hotelCost: Math.round(hotelCost),
+    activityCost: Math.round(actCost),
+    childDiscount: Math.round(childDisc),
+    transportEst: dest.country!=='India'?Math.round(baseDaily*1.5*travelers):Math.round(baseDaily*0.3*travelers),
+    total: estINR
+  };
+  breakdown.grandTotal = Math.round(breakdown.hotelCost+breakdown.activityCost-breakdown.childDiscount+breakdown.transportEst*0.5);
+
+  return {inr:estINR,usd:Math.round(estINR/USD_TO_INR),budgetFit,fitCls,budgetINR:budgetINRv,breakdown,travelers,hotelNightly,hotelCost,actCost};
+}
+
+function scoreDestination(dest,prefs){
+  if(!scopeMatches(dest,prefs.travelScope)) return -999;
+  let score=0;
+  const interests   = (prefs.interests||[]).map(lower);
+  const climate     = (prefs.climatePreference||[]).map(lower);
+  const food        = (prefs.foodPreference||[]).map(lower);
+  const access      = (prefs.accessibility||[]).map(lower);
+
+  score += interests.filter(v=>dest.interests.map(lower).includes(v)).length * 10;
+  score += climate.filter(v=>dest.climate.map(lower).includes(v)).length * 7;
+  score += food.filter(v=>dest.food.map(lower).includes(v)).length * 5;
+  score += access.filter(v=>(dest.accessibility||[]).map(lower).includes(v)).length * 6;
+  if(dest.safetyLevel==='high'&&lower(prefs.safetyPriority)==='high') score+=8;
+  if(dest.safetyLevel==='medium'&&lower(prefs.safetyPriority)!=='high') score+=4;
+  // hotel quality match
+  if(dest.hotels.some(h=>lower(h.quality)===lower(prefs.hotelQuality))) score+=12;
+  else score+=3;
+  // budget fit bonus
+  const costData = calcCost(dest,prefs);
+  if(costData.fitCls==='fit-within') score+=15;
+  else if(costData.fitCls==='fit-near') score+=7;
+  else score-=5;
+
+  return Math.max(score,0);
+}
+
+function makePlan(dest,prefs){
+  const duration = {days:Math.max(prefs.duration.days,1),nights:Math.max(prefs.duration.nights,1)};
+  const costData = calcCost(dest,prefs);
+  const cat = lower(prefs.budget.category||'medium');
+  const hotels = pickHotels(dest,prefs.hotelQuality,cat);
+  const visa   = getVisaStatus(dest,prefs.passportCountry);
+  const transport = transportPlan(dest,prefs);
+  const itinerary = buildItinerary(dest,prefs,duration);
+  const checklist = buildChecklist(dest,prefs);
+  const matchScore= scoreDestination(dest,prefs);
+
+  const safetyTips=[
+    `Safety level: ${dest.safetyLevel}. Prefer verified transport and well-reviewed stays.`,
+    'Keep digital and printed copies of IDs, bookings, and emergency contacts.',
+    prefs.safetyPriority==='High'?'Choose central neighbourhoods and avoid isolated late-night transfers.':'Use standard tourist safety precautions.'
+  ];
+
+  return {dest,matchScore,costData,hotels,visa,transport,itinerary,checklist,safetyTips,duration};
+}
+
+function runEngine(prefs){
+  return DESTINATIONS
+    .map(dest=>({dest,score:scoreDestination(dest,prefs)}))
+    .filter(x=>x.score>-999)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,6)
+    .map(x=>makePlan(x.dest,prefs));
+}
+
+/* =========================================================
+   GENERATE
+   ========================================================= */
+async function generate(){
+  const prefs = collectPrefs();
+  state.prefs  = prefs;
+
+  const btn = document.getElementById('generateBtn');
+  document.getElementById('genBtnText').textContent='Generating…';
+  document.getElementById('genBtnSpin').style.display='';
+  btn.disabled=true;
+
+  // Show loading state
+  document.getElementById('loadingState').style.display='flex';
+  document.getElementById('sortBar').style.display='none';
+  document.getElementById('resultGrid').innerHTML='';
+  scrollTo('#results');
+
+  const msgs=['Analysing your preferences…','Checking visa requirements…','Calculating budget fit…','Building itineraries…','Ranking destinations…'];
+  let mi=0;
+  const loadInter = setInterval(()=>{
+    document.getElementById('loadingMsg').textContent=msgs[Math.min(mi++,msgs.length-1)];
+  },700);
+
+  await new Promise(r=>setTimeout(r,2200));
+  clearInterval(loadInter);
+
+  state.recs = runEngine(prefs);
+  state.sortMode='score';
+  renderResults();
+
+  btn.disabled=false;
+  document.getElementById('genBtnText').textContent='Regenerate plan';
+  document.getElementById('genBtnSpin').style.display='none';
+  document.getElementById('loadingState').style.display='none';
+  document.getElementById('sortBar').style.display='flex';
+  setSortActive('score');
+
+  addBotMsg(`Generated ${state.recs.length} recommendations! Select a destination and ask me to refine it — budget, safety, food, pace, or romance.`);
+  toast(`Found ${state.recs.length} great destinations for you!`);
+}
+
+function collectPrefs(){
+  return {
+    passportCountry: document.getElementById('passportCountry').value,
+    travelScope    : document.getElementById('travelScope').value,
+    travelers:{
+      adultMales  :Number(document.getElementById('adultMales').value)||0,
+      adultFemales:Number(document.getElementById('adultFemales').value)||0,
+      children    :Number(document.getElementById('children').value)||0
+    },
+    budget:{
+      amount  :Number(document.getElementById('budgetAmount').value)||0,
+      currency:document.getElementById('currency').value,
+      category:document.getElementById('budgetCategory').value
+    },
+    duration:{
+      days  :Math.max(Number(document.getElementById('days').value)||5,1),
+      nights:Math.max(Number(document.getElementById('nights').value)||4,1)
+    },
+    hotelQuality :document.getElementById('hotelQuality').value,
+    transportation:document.getElementById('transportation').value,
+    safetyPriority:document.getElementById('safetyPriority').value,
+    tripPace      :document.getElementById('tripPace').value,
+    interests        :getChips('chips-interests'),
+    climatePreference:getChips('chips-climate'),
+    foodPreference   :getChips('chips-food'),
+    accessibility    :getChips('chips-access')
+  };
+}
+
+/* =========================================================
+   RENDER RESULTS
+   ========================================================= */
+function renderResults(){
+  const grid = document.getElementById('resultGrid');
+  if(!state.recs.length){
+    grid.innerHTML='<div class="empty-state"><h3>No destinations found</h3><p>Try expanding your scope or adjusting filters.</p></div>';
+    return;
+  }
+  grid.innerHTML = sortedRecs().map((plan,i)=>cardHTML(plan,i)).join('');
+  // Stagger animations
+  grid.querySelectorAll('.trip-card').forEach((c,i)=>{
+    c.style.animationDelay=(i*0.07)+'s';
+    c.classList.add('anim-fadeup');
+  });
+  // Animate budget bars after paint
+  requestAnimationFrame(()=>{
+    grid.querySelectorAll('.cbb-fill').forEach(b=>{
+      const w=b.dataset.w;
+      b.style.width=w+'%';
+    });
+  });
+}
+
+function sortedRecs(){
+  const r=[...state.recs];
+  if(state.sortMode==='cost-asc') return r.sort((a,b)=>a.costData.inr-b.costData.inr);
+  if(state.sortMode==='cost-desc') return r.sort((a,b)=>b.costData.inr-a.costData.inr);
+  if(state.sortMode==='budget-fit') return r.sort((a,b)=>{
+    const o={fit:0,near:1,over:2,'':3};
+    return (o[a.costData.fitCls]||3)-(o[b.costData.fitCls]||3);
+  });
+  return r.sort((a,b)=>b.matchScore-a.matchScore);
+}
+
+function sortBy(mode){
+  state.sortMode=mode;
+  setSortActive(mode);
+  renderResults();
+}
+function setSortActive(mode){
+  document.querySelectorAll('.sort-btn').forEach(b=>{
+    b.classList.toggle('on',b.getAttribute('onclick').includes(`'${mode}'`));
+  });
+}
+
+function cardHTML(plan,idx){
+  const {dest,matchScore,costData,hotels,visa,transport,itinerary,checklist,safetyTips}=plan;
+  const isSaved = state.saved.some(s=>s.id===dest.id);
+  const budgetPct = costData.budgetINR>0 ? Math.min((costData.inr/costData.budgetINR)*100,200) : 50;
+  const barCls    = budgetPct<=90?'cbb-ok':budgetPct<=115?'cbb-near':'cbb-over';
+  const matchCls  = matchScore>=50?'hi':matchScore>=25?'med':'';
+  const cid       = 'card_'+dest.id;
+
+  const hotelRows = hotels.map(h=>`
+    <div class="hotel-item">
+      <div><div class="hotel-name">${h.name}</div><div class="hotel-meta">${h.quality}</div></div>
+      <div class="hotel-price">${fmt(h.nightlyINR)}/night</div>
+    </div>`).join('');
+
+  const itinRows = itinerary.map(d=>`
+    <div class="itin-day">
+      <div class="itin-day-num">${d.day}</div>
+      <div class="itin-content">
+        <div class="itin-title">${d.title}</div>
+        <div class="itin-steps">🌅 ${d.morning}<br>☀ ${d.afternoon}<br>🌙 ${d.evening}</div>
+      </div>
+    </div>`).join('');
+
+  const breakdown = costData.breakdown;
+  const bdownRows = [
+    ['Hotel accommodation',fmt(breakdown.hotelCost)],
+    ['Activities & local expenses',fmt(breakdown.activityCost)],
+    ['Child discount',breakdown.childDiscount>0?`−${fmt(breakdown.childDiscount)}`:'—'],
+    ['Transport estimate (partial)',fmt(Math.round(breakdown.transportEst*0.5))],
+    ['Subtotal estimate',`<span style="color:var(--primary)">${fmt(breakdown.grandTotal)}</span>`]
+  ].map(([k,v])=>`<div class="breakdown-row"><span class="rk">${k}</span><span class="rv">${v}</span></div>`).join('');
+
+  return `
+<article class="trip-card">
+  <div class="card-img-wrap">
+    <img class="card-img" src="${dest.image}" alt="${dest.name}" loading="lazy"/>
+    <div class="card-img-overlay"></div>
+    <div class="card-img-meta">
+      <div class="card-dest">${dest.name}<small>${dest.country} · ${dest.region}</small></div>
+      <span class="match-badge ${matchCls}">${matchScore} match</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="visa-pill ${visa.cls}">${visa.label}</div>
+
+    <!-- Cost summary -->
+    <div class="cost-row">
+      <div class="cost-cell">
+        <div class="cl">Est. cost</div>
+        <div class="cv">${fmt(costData.inr)}</div>
+      </div>
+      <div class="cost-cell">
+        <div class="cl">USD equiv.</div>
+        <div class="cv">$${costData.usd.toLocaleString()}</div>
+      </div>
+      <div class="cost-cell">
+        <div class="cl">Budget fit</div>
+        <div class="cv ${costData.fitCls}">${costData.budgetFit}</div>
+      </div>
+    </div>
+
+    <!-- Budget bar -->
+    <div class="card-budget-bar">
+      <div class="cbb-labels">
+        <span>Budget usage</span>
+        <span>${costData.budgetINR>0?Math.round(budgetPct)+'%':'N/A'}</span>
+      </div>
+      <div class="cbb-bg">
+        <div class="cbb-fill ${barCls}" data-w="${Math.min(budgetPct,100)}" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Season & weather strip -->
+    <div class="info-strip">
+      <div class="info-chip">
+        <div class="ic-lbl">Best season</div>
+        <div class="ic-val">${dest.bestSeason}</div>
+      </div>
+      <div class="info-chip">
+        <div class="ic-lbl">Weather</div>
+        <div class="ic-val">${dest.weather}</div>
+      </div>
+    </div>
+
+    <!-- Expandable sections -->
+    <div class="expand-sections">
+      ${expandSection(cid+'_hotels','🏨 Suggested hotels',hotelRows)}
+      ${expandSection(cid+'_transport','✈ Transport plan',`<p><strong>${transport.primary}:</strong> ${transport.details}</p>`)}
+      ${expandSection(cid+'_breakdown','💰 Budget breakdown',`<div class="breakdown-col"><div class="breakdown-title">Cost breakdown</div>${bdownRows}</div>`)}
+      ${expandSection(cid+'_itin','🗓 Day-wise itinerary',`<div class="itin-list">${itinRows}</div>`)}
+      ${expandSection(cid+'_food','🍽 Food recommendations',`<div class="tag-list">${dest.foods.map(f=>`<span class="tag">${f}</span>`).join('')}</div><div style="margin-top:10px"><div class="ic-lbl" style="margin-bottom:6px">Nearby attractions</div><div class="tag-list">${dest.attractions.map(a=>`<span class="tag">${a}</span>`).join('')}</div></div>`)}
+      ${expandSection(cid+'_safety','⚠ Safety & checklist',`<div class="safety-list">${safetyTips.map(t=>`<div class="safety-item">${t}</div>`).join('')}</div><div style="margin-top:10px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Travel checklist</div><div class="checklist-grid">${checklist.map(c=>`<div class="check-item">${c}</div>`).join('')}</div>`)}
+    </div>
+
+    <!-- Actions -->
+    <div class="card-actions">
+      <a class="cta-maps" href="https://www.google.com/maps/search/?api=1&query=${dest.coordinates.lat},${dest.coordinates.lng}" target="_blank" rel="noreferrer">📍 Open Maps</a>
+      <button class="cta-save ${isSaved?'saved':''}" onclick="saveTrip('${dest.id}',this)">${isSaved?'✓ Saved':'Save Trip'}</button>
+    </div>
+  </div>
+</article>`;
+}
+
+function expandSection(id,title,content){
+  return `
+<div class="expand-section">
+  <button class="expand-toggle" onclick="toggleExpand('${id}',this)">
+    <span>${title}</span><span class="arrow">▾</span>
+  </button>
+  <div class="expand-body" id="${id}">${content}</div>
+</div>`;
+}
+
+function toggleExpand(id,btn){
+  const body=document.getElementById(id);
+  const isOpen=body.classList.toggle('open');
+  btn.classList.toggle('open',isOpen);
+}
+
+/* =========================================================
+   SAVE TRIPS (localStorage)
+   ========================================================= */
+function saveTrip(destId,btn){
+  const plan = state.recs.find(p=>p.dest.id===destId);
+  if(!plan) return;
+  const already = state.saved.findIndex(s=>s.id===destId);
+  if(already!==-1){
+    state.saved.splice(already,1);
+    btn.textContent='Save Trip';btn.classList.remove('saved');
+    toast('Trip removed from saved.');
+  } else {
+    state.saved.push({
+      id:destId,
+      name:plan.dest.name,
+      country:plan.dest.country,
+      cost:plan.costData.inr,
+      budgetFit:plan.costData.budgetFit,
+      savedAt:new Date().toLocaleDateString()
+    });
+    btn.textContent='✓ Saved';btn.classList.add('saved');
+    toast(`${plan.dest.name} saved!`);
+  }
+  localStorage.setItem('stp_saved',JSON.stringify(state.saved));
+  renderSaved();
+}
+
+function renderSaved(){
+  const list=document.getElementById('savedList');
+  if(!state.saved.length){
+    list.innerHTML='<div class="empty-saved">No saved trips yet. Generate a plan and save destinations you like.</div>';
+    return;
+  }
+  list.innerHTML=state.saved.map(s=>`
+    <div class="saved-item">
+      <div class="saved-info">
+        <strong>${s.name}, ${s.country}</strong>
+        <span>${fmt(s.cost)} · ${s.budgetFit} · ${s.savedAt}</span>
+      </div>
+      <button class="btn-del" onclick="removeSaved('${s.id}')">Remove</button>
+    </div>`).join('');
+}
+
+function removeSaved(id){
+  state.saved=state.saved.filter(s=>s.id!==id);
+  localStorage.setItem('stp_saved',JSON.stringify(state.saved));
+  renderSaved();
+  // update card button if visible
+  const btn=document.querySelector(`[onclick*="saveTrip('${id}'"]`);
+  if(btn){btn.textContent='Save Trip';btn.classList.remove('saved')}
+  toast('Trip removed.');
+}
+
+/* =========================================================
+   DEMO FILL
+   ========================================================= */
+function fillDemo(){
+  document.getElementById('passportCountry').value='India';
+  document.getElementById('travelScope').value='Worldwide Trip';
+  document.getElementById('budgetAmount').value=160000;
+  document.getElementById('currency').value='INR';
+  document.getElementById('budgetCategory').value='Medium';
+  document.getElementById('hotelQuality').value='4-Star';
+  document.getElementById('days').value=5;
+  document.getElementById('nights').value=4;
+  document.getElementById('adultMales').value=1;
+  document.getElementById('adultFemales').value=1;
+  document.getElementById('children').value=0;
+  document.getElementById('transportation').value='Flight';
+  document.getElementById('safetyPriority').value='High';
+  document.getElementById('tripPace').value='Balanced';
+  // reset all chips
+  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
+  ['beaches','honeymoon','food'].forEach(v=>chipOn('chips-interests',v));
+  ['moderate'].forEach(v=>chipOn('chips-climate',v));
+  ['Vegetarian'].forEach(v=>chipOn('chips-food',v));
+  updateBudgetPreview();
+  toast('Demo inputs loaded!');
+}
+function chipOn(groupId,val){
+  const c=document.querySelector(`#${groupId} [data-v="${val}"]`);
+  if(c) c.classList.add('on');
+}
+
+/* =========================================================
+   CHAT (local heuristic AI)
+   ========================================================= */
+function addBotMsg(text){
+  const w=document.getElementById('chatWindow');
+  const d=document.createElement('div');
+  d.className='msg bot';d.textContent=text;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+}
+function addUserMsg(text){
+  const w=document.getElementById('chatWindow');
+  const d=document.createElement('div');
+  d.className='msg user';d.textContent=text;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+}
+
+function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  addUserMsg(msg);inp.value='';
+  const reply=chatReply(msg.toLowerCase());
+  setTimeout(()=>addBotMsg(reply),600);
+}
+
+function chatReply(msg){
+  if(!state.recs.length) return 'Please generate a travel plan first by filling the form above!';
+  const top=state.recs[0];
+  if(msg.includes('cheaper')||msg.includes('budget')||msg.includes('low cost')){
+    const cheap=state.recs.find(p=>p.costData.fitCls==='fit-within')||state.recs[state.recs.length-1];
+    return `For a more budget-friendly option, consider ${cheap.dest.name} at an estimated ${fmt(cheap.costData.inr)}. Try selecting "Low" budget category and "Budget" hotel quality for the best savings.`;
+  }
+  if(msg.includes('safe')||msg.includes('safety')){
+    const safe=state.recs.filter(p=>p.dest.safetyLevel==='high');
+    if(safe.length) return `Your safest options are: ${safe.map(p=>p.dest.name).join(', ')}. All rated high safety. Set Safety Priority to "High" in the form to boost their score.`;
+    return `All recommended destinations have medium to high safety ratings. Keep emergency contacts handy and use verified transport.`;
+  }
+  if(msg.includes('family')||msg.includes('kids')||msg.includes('child')){
+    const fam=state.recs.filter(p=>p.dest.interests.includes('family'));
+    return `Best family picks from your plan: ${fam.map(p=>p.dest.name).join(', ')}. These have child-friendly activities and amenities.`;
+  }
+  if(msg.includes('honeymoon')||msg.includes('romantic')||msg.includes('couple')){
+    const hon=state.recs.filter(p=>p.dest.interests.includes('honeymoon'));
+    return `Top romantic destinations: ${hon.map(p=>p.dest.name).join(', ')}. These offer intimate stays, scenic views, and couple-friendly experiences.`;
+  }
+  if(msg.includes('food')||msg.includes('vegetarian')||msg.includes('veg')){
+    const veg=state.recs.filter(p=>p.dest.food.includes('Vegetarian'));
+    return `Vegetarian-friendly destinations: ${veg.map(p=>p.dest.name).join(', ')}. Their local cuisines include great veg options.`;
+  }
+  if(msg.includes('hot')||msg.includes('beach')||msg.includes('sun')){
+    const hot=state.recs.filter(p=>p.dest.climate.includes('hot')||p.dest.interests.includes('beaches'));
+    return `For warm beaches and sunny weather: ${hot.map(p=>p.dest.name).join(', ')}. Best visited in their peak seasons for good weather.`;
+  }
+  if(msg.includes('cold')||msg.includes('snow')||msg.includes('mountain')){
+    const cold=state.recs.filter(p=>p.dest.climate.includes('cold')||p.dest.climate.includes('snowy'));
+    return `For cold/snowy mountain experiences: ${cold.map(p=>p.dest.name).join(', ')}. Pack thermals and check road/pass conditions.`;
+  }
+  if(msg.includes('visa')){
+    const free=state.recs.filter(p=>p.visa.cls==='visa-free');
+    const easy=state.recs.filter(p=>p.visa.cls==='visa-easy');
+    return `Visa-free for your passport: ${free.map(p=>p.dest.name).join(', ')||'none'}. Easy e-visa: ${easy.map(p=>p.dest.name).join(', ')||'none'}.`;
+  }
+  if(msg.includes('best')||msg.includes('top')||msg.includes('recommend')){
+    return `Your top match is ${top.dest.name} with a score of ${top.matchScore}. Estimated cost: ${fmt(top.costData.inr)} — ${top.costData.budgetFit}. Best season: ${top.dest.bestSeason}.`;
+  }
+  if(msg.includes('cost')||msg.includes('price')||msg.includes('expensive')){
+    const sorted=[...state.recs].sort((a,b)=>a.costData.inr-b.costData.inr);
+    return `Cheapest: ${sorted[0].dest.name} at ${fmt(sorted[0].costData.inr)}. Most expensive: ${sorted[sorted.length-1].dest.name} at ${fmt(sorted[sorted.length-1].costData.inr)}.`;
+  }
+  return `Here are your top picks: ${state.recs.slice(0,3).map(p=>`${p.dest.name} (${fmt(p.costData.inr)})`).join(', ')}. Ask me about budget, safety, family-friendliness, food preferences, or visa requirements!`;
+}
+
+/* =========================================================
+   AUTH (local simulation)
+   ========================================================= */
+let authMode='login';
+function openAuth(){
+  if(state.user){
+    if(confirm(`Logged in as ${state.user.email}. Logout?`)){
+      state.user=null;localStorage.removeItem('stp_user');
+      document.getElementById('authBtn').textContent='Login';
+      renderSaved();toast('Logged out.');
+    }
+    return;
+  }
+  document.getElementById('authDialog').showModal();
+}
+function switchAuth(){
+  authMode=authMode==='login'?'register':'login';
+  document.getElementById('authTitle').textContent=authMode==='login'?'Welcome back':'Create account';
+  document.getElementById('authSubmit').textContent=authMode==='login'?'Login':'Register';
+  document.getElementById('authSwitch').textContent=authMode==='login'?'Create an account':'Already have an account?';
+  document.getElementById('nameField').style.display=authMode==='register'?'flex':'none';
+}
+function doAuth(){
+  const email=document.getElementById('authEmail').value;
+  const pass =document.getElementById('authPassword').value;
+  const name =document.getElementById('authName').value||email.split('@')[0];
+  if(!email||!pass){toast('Please fill in all fields.');return;}
+  state.user={email,name};
+  localStorage.setItem('stp_user',JSON.stringify(state.user));
+  document.getElementById('authBtn').textContent=name.split(' ')[0];
+  document.getElementById('authDialog').close();
+  toast(`Welcome, ${name}!`);
+  renderSaved();
+}
+
+/* =========================================================
+   THEME
+   ========================================================= */
+function setTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('stp_theme',t)}
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+});
+
+/* =========================================================
+   TOPBAR SCROLL SHADOW
+   ========================================================= */
+window.addEventListener('scroll',()=>{
+  document.getElementById('topbar').classList.toggle('scrolled',window.scrollY>10);
+},{passive:true});
+
+/* =========================================================
+   CHIPS INTERACTIVITY
+   ========================================================= */
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>c.classList.toggle('on'));
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+(function init(){
+  setTheme(localStorage.getItem('stp_theme')||'light');
+  if(state.user) document.getElementById('authBtn').textContent=state.user.name.split(' ')[0];
+  renderSaved();
+  updateBudgetPreview();
+  addBotMsg('Hi! Generate a travel plan and then ask me to optimize for budget, safety, romance, food preferences, or anything else.');
+})();
+</script>
+</body>
+</html>
